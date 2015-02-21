@@ -1,0 +1,13 @@
+LICENSE
+MANIFEST.in
+README.md
+setup.py
+python_api_client/__init__.py
+python_api_client/exceptions.py
+python_api_client/models.py
+python_api_client/resource.py
+python_api_client.egg-info/PKG-INFO
+python_api_client.egg-info/SOURCES.txt
+python_api_client.egg-info/dependency_links.txt
+python_api_client.egg-info/requires.txt
+python_api_client.egg-info/top_level.txt
