@@ -46,6 +46,9 @@ class Manager(object):
     def all(self, *args, **kwargs):
         return self.get_resource().all(*args, **kwargs)
 
+    def delete(self, *args, **kwargs):
+        return self.get_resource().delete(*args, **kwargs)
+
 
 class ModelBase(ABCMeta):
     """
@@ -112,11 +115,11 @@ class Model(six.with_metaclass(ModelBase)):
             return self.serialize()
         else:
             changed = {}
-            for key, val in self._initial_data.iteritems():
-                if val != getattr(self, key):
+            for key, val in self.serialize().iteritems():
+                initial_val = self._initial_data.get(key, None)
+                if not initial_val or val != initial_val:
                     changed[key] = val
             return changed
-
 
     def deserialize(self, data_dict):
         """
@@ -132,10 +135,10 @@ class Model(six.with_metaclass(ModelBase)):
     def save(self, **kwargs):
         if not self._can_save:
             raise CantSaveException('You cant save a %s.' % self.__class__.__name__)
-        self.get_resource().save(self)
+        self.get_resource().save(self, **kwargs)
 
     def delete(self, **kwargs):
-        self.get_resource().delete(self)
+        return self.get_resource().delete(self, **kwargs)
 
     def deserialize_date(self, date_string):
         return dateutil.parser.parse(date_string)

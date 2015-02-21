@@ -11,6 +11,11 @@ ITER_CHUNK_SIZE = CHUNK_SIZE
 DELETE_STATUS = [200, 202, 204]
 
 
+class Meta(object):
+    def __init__(self, **vars):
+        self.__dict__.update(vars)
+
+
 class ResourceSet(object):
     """
     ResourceSet uses python requests to send requests to an api endpoint.
@@ -24,6 +29,7 @@ class ResourceSet(object):
 
     def __init__(self, model, *args, **kwargs):
         self.model = model
+        self._meta = None
         self._result_cache = None
         self._iter = None
         self._limit_start = None
@@ -129,6 +135,7 @@ class ResourceSet(object):
         else:
             #TODO - make 'objects' configurable so we can have any api list structure
             data_list = response_json.get('objects', response_json)
+            self._meta = Meta(**response_json.get('meta', {}))
 
         for data in data_list:
             instance = self.model()
@@ -148,10 +155,11 @@ class ResourceSet(object):
         self._token = kwargs.pop('token', self._token)
         return self
 
-    def get(self, pk=None, slug=None, **kwargs):
-        lookup = pk or slug
+    def get(self, pk=None, slug=None, code=None, **kwargs):
+        self._token = kwargs.pop('token', self._token)
+        lookup = pk or slug or code
         if not lookup and not self._token:
-            raise ResourceSetException('You need to specify a pk, slug or a token to use get()')
+            raise ResourceSetException('You need to specify a pk, slug, code or a token to use get()')
         url = self.build_url(lookup=lookup)
 
         response = self.send('get', url, **kwargs)
@@ -163,11 +171,11 @@ class ResourceSet(object):
     def patch(self, instance, **kwargs):
         self._token = kwargs.pop('token', self._token)
         url = self.build_url(lookup=instance.pk)
-        data = instance.serialize_changed()
+        data = self.model.validate_data(instance.serialize_changed())
         if data:
             response = self.send('patch', url, data=json.dumps(data), **kwargs)
-            if response.status_code != 200:
-                raise ResourceSetException('Expected status code %s, got %s' % ('200', response.status_code))
+            if response.status_code not in [200, 201, 202]:
+                raise ResourceSetException('Expected status code 200, 201, 202, got %s' % (response.status_code))
         return instance
 
     def save(self, instance, **kwargs):
@@ -177,7 +185,7 @@ class ResourceSet(object):
         data = self.model.validate_data(instance.serialize())
         response = self.send('post', self.url, data=json.dumps(data), **kwargs)
         if response.status_code != 201:
-            raise ResourceSetException('Expected status code %s, got %s' % ('201', response.status_code))
+            raise ResourceSetException('Expected status code 201, got %s' % (response.status_code))
         return instance
 
     def delete(self, instance, **kwargs):
@@ -201,6 +209,13 @@ class ResourceSet(object):
             data['limit_stop'] = self._limit_stop
         return data
 
+    @property
+    def meta(self):
+        if self._meta is None:
+            # force lazy load to load
+            len(self)
+        return self._meta
+
     def query_string(self):
         return urlencode(self.params)
 
@@ -223,6 +238,7 @@ class ResourceSet(object):
         """
 
         self._token = kwargs.pop('token', self._token)
+
         headers = kwargs.pop('headers', {})
         if self._token:
             headers['AUTHORIZATION'] = 'JWT %s' % self._token
@@ -241,10 +257,9 @@ class ResourceSet(object):
             response_json = response.json()
         except ValueError:
             response_json = None
-
         # If the API is in debug, add the traceback to a new exception so it can be seen on the front end
-        if response.status_code >= 400 or response_json is None or 'traceback' in response_json or \
-                'error' in response_json:
+        if response.status_code >= 400 or response_json is None or \
+                'traceback' in response_json or 'error' in response_json:
             error = 'Unknown error'
             traceback = 'No traceback'
             content = response.content
