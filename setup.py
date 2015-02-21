@@ -21,7 +21,7 @@ setup(
         "Development Status :: 3 - Alpha",
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules'
-        "License :: OSI Approved :: GNU GENERAL PUBLIC LICENSE",
+        "License :: OSI Approved :: MIT LICENSE",
     ],
     install_requires=[
         "requests >= 2.3.0",
