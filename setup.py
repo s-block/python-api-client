@@ -1,6 +1,8 @@
 import os
 from setuptools import setup, find_packages
 
+from python_api_client import __version__
+
 
 # Utility function to read the README file.
 def read(fname):
@@ -8,7 +10,7 @@ def read(fname):
 
 setup(
     name="python_api_client",
-    version="0.0.1",
+    version='.'.join(str(v) for v in __version__),
     author="Josh Rowe",
     author_email="josh@s-block.com",
     description="Python client for REST api.",
