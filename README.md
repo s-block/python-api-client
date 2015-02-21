@@ -21,7 +21,8 @@ Usage
 If you are using Django put the following in to your settings file:
 
 ```python
-BASE_API_URL = "http://yourdomain.com/api/v2/"```
+BASE_API_URL = "http://yourdomain.com/api/v2/"
+```
 
 If you are not using Django create a file called settings.py in your project and add the line to that.
 
