@@ -16,7 +16,7 @@ setup(
     description='Python client for REST api.',
     license='BSD',
     keywords='python REST api client',
-    url='',
+    url='https://github.com/s-block/python-api-client',
     packages=find_packages(exclude=['tests']),
     long_description=read('README.md'),
     classifiers=[
